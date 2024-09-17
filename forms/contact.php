@@ -10,11 +10,11 @@
 // Replace contact@example.com with your real receiving email address
 $receiving_email_address = 'vidhyaramasamy13@gmail.com';
 
-if (file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php')) {
-  include($php_email_form);
-} else {
-  // die('Unable to load the "PHP Email Form" Library!');
-}
+// if (file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php')) {
+//   include($php_email_form);
+// } else {
+//    die('Unable to load the "PHP Email Form" Library!');
+// }
 
 // $contact = new PHP_Email_Form;
 // $contact->ajax = true;
@@ -24,12 +24,48 @@ if (file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-for
 // $contact->from_email = $_POST['email'];
 // $contact->subject = $_POST['subject'];
 
-$con = mysqli_connect('localhost', 'root', '', 'valldb');
-$query = mysqli_query($con, 'INSERT INTO `contact`(`id`, `name`, `email`, `subject`, `message`, `created_at`, `is_deleted`, `deleted_at`) 
-VALUES (' . $_POST['name'] . ', ' . $_POST['email'] . ',' . $_POST['subject'] . ',' . $_POST['message'] . ')');
-if ($query) {
-  echo 'success';
+$con = new mysqli('localhost', 'root', '', 'valldb');
+
+// Check connection
+if ($con->connect_error) {
+  die("Connection failed: " . $con->connect_error);
 }
+$name = isset($_POST['name']) ? $con->real_escape_string($_POST['name']) : '';
+$email = isset($_POST['email']) ? $con->real_escape_string($_POST['email']) : '';
+$subject = isset($_POST['subject']) ? $con->real_escape_string($_POST['subject']) : '';
+$message = isset($_POST['message']) ? $con->real_escape_string($_POST['message']) : '';
+$query = "INSERT INTO `contact`(`name`, `email`, `subject`, `message`) 
+VALUES ('$name', '$email','$subject','$message')";
+$stmt = $conn->prepare("SELECT COUNT(*) FROM contact WHERE email = ?");
+$stmt->bind_param("s", $email);  // "s" denotes the type of the parameter, which is a string
+
+// Execute the statement
+$stmt->execute();
+
+// Bind the result to a variable
+$stmt->bind_result($count);
+
+// Fetch the result
+$stmt->fetch();
+
+// Check if the email exists
+if ($count > 0) {
+  //echo "Email already exists.";
+} else {
+  if ($con->query($query) === TRUE) {
+    echo "New record created successfully";
+  } else {
+    echo "Error: " . $query . "<br>" . $con->error;
+  }
+}
+
+// Close the statement and connection
+$stmt->close();
+
+
+// Close the connection
+$con->close();
+
 // Uncomment below code if you want to use SMTP to send emails. You need to enter your correct SMTP credentials
 /*
   $contact->smtp = array(
